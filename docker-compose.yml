@@ -1,0 +1,112 @@
+version: "3.9"
+
+services:
+  # ── PostgreSQL Database ────────────────────────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    container_name: tradesense_db
+    environment:
+      POSTGRES_DB: tradesense
+      POSTGRES_USER: tradesense_user
+      POSTGRES_PASSWORD: tradesense_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tradesense_user -d tradesense"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - tradesense_net
+
+  # ── FastAPI Backend ────────────────────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: production
+    container_name: tradesense_backend
+    environment:
+      DATABASE_URL: postgresql+asyncpg://tradesense_user:tradesense_pass@db:5432/tradesense
+      SECRET_KEY: dev-secret-key-REPLACE-IN-PRODUCTION-must-be-32-chars-min
+      ENVIRONMENT: development
+      DEBUG: "true"
+      ALLOWED_ORIGINS: "http://localhost:3000,http://frontend:3000"
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      # Hot reload in development — remove in production
+      - ./backend/app:/app/app
+    command: >
+      uvicorn app.main:app
+      --host 0.0.0.0
+      --port 8000
+      --reload
+      --log-level info
+    healthcheck:
+      test: ["CMD", "python", "-c",
+             "import httpx; r = httpx.get('http://localhost:8000/health', timeout=5); exit(0 if r.status_code in (200,503) else 1)"]
+      interval: 30s
+      timeout: 10s
+      start_period: 40s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - tradesense_net
+
+  # ── Next.js Frontend ───────────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: tradesense_frontend
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    volumes:
+      # Hot reload in development
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    restart: unless-stopped
+    networks:
+      - tradesense_net
+
+  # ── Alembic Migrations ─────────────────────────────────────────────────────────
+  # Run once to apply migrations, then exits.
+  # Usage: docker compose run --rm migrate
+  migrate:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: production
+    container_name: tradesense_migrate
+    environment:
+      DATABASE_URL: postgresql+asyncpg://tradesense_user:tradesense_pass@db:5432/tradesense
+    depends_on:
+      db:
+        condition: service_healthy
+    command: alembic upgrade head
+    profiles:
+      - migrate        # Only runs with: docker compose --profile migrate up migrate
+    networks:
+      - tradesense_net
+
+# ── Volumes ────────────────────────────────────────────────────────────────────
+volumes:
+  pgdata:
+    driver: local
+
+# ── Networks ────────────────────────────────────────────────────────────────────
+networks:
+  tradesense_net:
+    driver: bridge

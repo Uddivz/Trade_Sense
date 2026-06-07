@@ -1,0 +1,67 @@
+# TradeSense — Root .gitignore
+
+# ── Python ──────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+.venv/
+venv/
+ENV/
+
+# ── Environment Files ────────────────────────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+*.env
+
+# ── Testing ──────────────────────────────────────────────────────────────────────
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# ── Node / Frontend ──────────────────────────────────────────────────────────────
+node_modules/
+frontend/.next/
+frontend/out/
+frontend/build/
+frontend/.pnp
+frontend/.pnp.js
+*.tsbuildinfo
+frontend/next-env.d.ts
+
+# ── IDEs ─────────────────────────────────────────────────────────────────────────
+.idea/
+.vscode/settings.json
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ── Docker ───────────────────────────────────────────────────────────────────────
+# Keep Dockerfiles; ignore data volumes
+docker/data/
+
+# ── Database ─────────────────────────────────────────────────────────────────────
+*.sqlite
+*.db
+
+# ── Logs ─────────────────────────────────────────────────────────────────────────
+*.log
+logs/
+
+# ── ML Artifacts ─────────────────────────────────────────────────────────────────
+*.pkl
+*.joblib
+*.h5
+mlruns/
+
+# ── Uploads (user data — never commit) ───────────────────────────────────────────
+uploads/
+data/

@@ -1,0 +1,2 @@
+﻿# TradeSense — backend\tests package
+
