@@ -4,7 +4,7 @@ Loads all settings from environment variables with type validation.
 Uses Pydantic BaseSettings for strict, self-documenting configuration.
 """
 from functools import lru_cache
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import field_validator
 
 
@@ -36,6 +36,13 @@ class Settings(BaseSettings):
     # ── Market Data ────────────────────────────────────────────────────
     market_data_cache_ttl_seconds: int = 3600  # 1 hour
 
+    @field_validator("allowed_origins", mode="before")
+    @classmethod
+    def parse_cors_origins(cls, v: str | list[str]) -> list[str]:
+        if isinstance(v, str) and not v.startswith("["):
+            return [i.strip() for i in v.split(",") if i.strip()]
+        return v
+
     @field_validator("secret_key")
     @classmethod
     def secret_key_min_length(cls, v: str) -> str:
@@ -51,10 +58,11 @@ class Settings(BaseSettings):
             raise ValueError(f"ENVIRONMENT must be one of {allowed}")
         return v
 
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-        case_sensitive = False
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False
+    )
 
 
 @lru_cache(maxsize=1)

@@ -3,6 +3,9 @@ TradeSense — Async Database Engine
 Configures SQLAlchemy async engine, session factory, and declarative base.
 All database access in TradeSense goes through the AsyncSession dependency.
 """
+from typing import AsyncGenerator
+
+
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
@@ -44,7 +47,7 @@ class Base(DeclarativeBase):
 
 
 # ── FastAPI Dependency ──────────────────────────────────────────────────────────
-async def get_db() -> AsyncSession:  # type: ignore[return]
+async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """
     FastAPI dependency that yields a database session per request.
     Automatically commits on success and rolls back on exception.
@@ -61,8 +64,6 @@ async def get_db() -> AsyncSession:  # type: ignore[return]
         except Exception:
             await session.rollback()
             raise
-        finally:
-            await session.close()
 
 
 # ── Health Helper ───────────────────────────────────────────────────────────────

@@ -1,0 +1,29 @@
+{
+  "name": "TradeSense Backend Env",
+  "dockerComposeFile": [
+    "../docker-compose.yml"
+  ],
+  "service": "backend",
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-python.black-formatter"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "python.analysis.extraPaths": [
+          "/workspaces/${localWorkspaceFolderBasename}/backend"
+        ],
+        "python.testing.pytestEnabled": true,
+        "python.testing.cwd": "/workspaces/${localWorkspaceFolderBasename}/backend",
+        "python.testing.pytestArgs": [
+          "tests"
+        ]
+      }
+    }
+  },
+  "remoteUser": "tradesense"
+}
