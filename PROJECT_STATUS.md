@@ -32,26 +32,58 @@ The core scaffolding for the entire MVP architecture is fully complete. The foll
    - Complete `docker-compose.yml` orchestrating PostgreSQL, FastAPI, and Next.js.
    - Dedicated `migrate` profile for executing database schema changes easily.
 
+## Work Completed (Day 2–5 — Week 1: Auth, Portfolios & Testing)
+
+All Week 1 deliverables have been implemented and verified:
+
+1. **Authentication Endpoints:**
+   - `POST /v1/auth/register` — creates user with bcrypt-hashed password, duplicate email detection, password strength validation.
+   - `POST /v1/auth/login` — OAuth2-compatible login returning signed JWT access token.
+   - `get_current_user` dependency — extracts and validates user from JWT, secures all protected routes.
+
+2. **Portfolio CRUD Endpoints:**
+   - `POST /v1/portfolios/` — creates a portfolio for the authenticated user (first portfolio auto-flagged as default).
+   - `GET /v1/portfolios/` — lists all portfolios for the authenticated user (sorted by creation date desc).
+   - Both endpoints return 401 Unauthorized when accessed without a valid token.
+
+3. **Alembic Migration:**
+   - Initial migration (`f288aa2e299e`) generated and applied, creating all 6 tables: `users`, `portfolios`, `transactions`, `holdings`, `behavioral_metrics`, `recommendations`.
+   - Proper indexes, foreign keys, and cascade deletes configured.
+
+4. **Testing:**
+   - `test_health.py` — root endpoint and health check smoke tests.
+   - `test_auth_portfolio.py` — registration, duplicate detection, weak password rejection, login, JWT retrieval, unauthenticated 401 checks, portfolio CRUD with auth.
+   - All **4 tests passing** (`pytest tests/ -v` ✅).
+
+## Week 1 Deliverable Checklist
+- [x] Docker Compose starts cleanly (postgres + backend)
+- [x] `GET /health` returns 200
+- [x] `POST /v1/auth/register` creates user with hashed password
+- [x] `POST /v1/auth/login` returns JWT
+- [x] `GET /v1/portfolios/` requires auth (401 without token)
+- [x] All database tables created via Alembic migration
+- [x] Tests passing: `pytest tests/ -v`
+
 ## Current System Status
 - ✅ **Backend Configuration:** Healthy
 - ✅ **Frontend Build:** Passing
-- ✅ **Database Connectivity Strategy:** Fixed and optimized (`AsyncGenerator` yields with automatic scope cleanup).
-- 🔄 **Feature Implementation:** Pending (Ready to start Day 2 tasks)
+- ✅ **Database Connectivity:** Fixed and optimized (`AsyncGenerator` yields with automatic scope cleanup)
+- ✅ **Week 1 Feature Implementation:** Complete
+- ✅ **Pushed to GitHub:** `https://github.com/Uddivz/Trade_Sense`
 
-## Next Steps (Day 2)
+## Next Steps (Week 2)
 
-We are now ready to begin **Day 2: Authentication & Portfolio CRUD**.
+We are now ready to begin **Week 2: CSV Upload & Transaction Parsing**.
 
 The immediate next tasks are:
-1. Generate the initial Alembic migration file to construct the database tables.
-2. Implement `POST /v1/auth/register` and `POST /v1/auth/login` to secure the app.
-3. Build the `get_current_user` FastAPI dependency to secure subsequent routes.
-4. Create the `POST /v1/portfolios` and `GET /v1/portfolios` endpoints to allow users to create and list their portfolios.
-5. Update `main.py` to route these new endpoints.
+1. Implement CSV upload endpoint (`POST /v1/uploads/csv`).
+2. Build broker-specific CSV parsers (Zerodha, Groww, etc.).
+3. Parse and validate transactions, persist to the `transactions` table.
+4. Implement `GET /v1/portfolios/{id}/transactions` to retrieve parsed trades.
+5. Compute and update `holdings` table from transaction data.
 
 **Action Required to Test Locally:**
-If you want to spin up the system locally right now:
-1. Copy `backend/.env.example` to `backend/.env` (already done)
+1. Ensure `backend/.env` is configured (already done)
 2. Run `docker compose up --build`
 3. In a new terminal, run `docker compose --profile migrate up migrate`
 4. Verify backend is active at `http://localhost:8000/docs`
