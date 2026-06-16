@@ -2,35 +2,35 @@
 # Pin major versions; exact pinning is for production lock files (requirements.lock)
 
 # ── Web Framework ───────────────────────────────────────────────────────────────
-fastapi==0.111.0
-uvicorn[standard]==0.29.0
+fastapi>=0.111.0
+uvicorn[standard]>=0.29.0
 
 # ── Database ────────────────────────────────────────────────────────────────────
-sqlalchemy==2.0.30
-asyncpg==0.29.0
-alembic==1.13.1
+sqlalchemy>=2.0.30
+asyncpg>=0.29.0
+alembic>=1.13.1
 
 # ── Validation & Settings ───────────────────────────────────────────────────────
-pydantic[email]==2.7.1
-pydantic-settings==2.2.1
+pydantic[email]>=2.7.1
+pydantic-settings>=2.2.1
 
 # ── Security ────────────────────────────────────────────────────────────────────
-python-jose[cryptography]==3.3.0
-passlib[bcrypt]==1.7.4
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
 
 # ── Data Processing ─────────────────────────────────────────────────────────────
-pandas==2.2.2
-numpy==1.26.4
-python-multipart==0.0.9    # Required for FastAPI file uploads
+pandas>=2.2.3
+numpy>=1.26.0
+python-multipart>=0.0.9    # Required for FastAPI file uploads
 
 # ── Market Data ─────────────────────────────────────────────────────────────────
-yfinance==0.2.40
-requests==2.31.0           # yfinance dependency (pinned for security)
+yfinance>=0.2.40
+requests>=2.31.0           # yfinance dependency (pinned for security)
 
 # ── Date Utilities ───────────────────────────────────────────────────────────────
-python-dateutil==2.9.0.post0
+python-dateutil>=2.9.0.post0
 
 # ── Testing ─────────────────────────────────────────────────────────────────────
-pytest==8.2.0
-pytest-asyncio==0.23.6
-httpx==0.27.0              # Async HTTP client for FastAPI TestClient
+pytest>=8.2.0
+pytest-asyncio>=0.23.6
+httpx>=0.27.0              # Async HTTP client for FastAPI TestClient

@@ -13,7 +13,8 @@ from app.config import settings
 from app.database import check_db_connection
 
 # ── Router Imports (will be activated as they are built in subsequent days) ────
-# from app.api.v1.endpoints import auth, portfolios, uploads, analytics, recommendations
+from app.api.v1.endpoints import auth, portfolios
+# from app.api.v1.endpoints import uploads, analytics, recommendations
 
 
 # ── Lifespan ───────────────────────────────────────────────────────────────────
@@ -64,8 +65,8 @@ def create_app() -> FastAPI:
 
     # ── Routers ────────────────────────────────────────────────────────────────
     # Uncomment each router as you build it during the 4-week sprint:
-    # app.include_router(auth.router,            prefix="/v1")
-    # app.include_router(portfolios.router,      prefix="/v1")
+    app.include_router(auth.router,            prefix="/v1")
+    app.include_router(portfolios.router,      prefix="/v1")
     # app.include_router(uploads.router,         prefix="/v1")
     # app.include_router(analytics.router,       prefix="/v1")
     # app.include_router(recommendations.router, prefix="/v1")
