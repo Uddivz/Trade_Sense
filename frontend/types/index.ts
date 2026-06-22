@@ -18,6 +18,40 @@ export interface TokenResponse {
   token_type: string;
 }
 
+/** Generic paginated envelope matching backend PaginatedResponse[T]. */
+export interface PaginatedResponse<T> {
+  items: T[];
+  total: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+}
+
+export interface Transaction {
+  id: string;
+  portfolio_id: string;
+  symbol: string;
+  isin: string | null;
+  exchange: string;
+  transaction_type: 'BUY' | 'SELL';
+  quantity: number;
+  price: number;
+  total_value: number;
+  brokerage: number;
+  stt: number;
+  other_charges: number;
+  fees: number;
+  net_value: number;
+  trade_date: string;       // ISO date string "YYYY-MM-DD"
+  notes: string | null;
+  broker_trade_id: string | null;
+  external_trade_id: string | null;
+  broker: string | null;
+  raw_data: Record<string, unknown> | null;
+  created_at: string;
+  updated_at: string | null;
+}
+
 // ── Portfolio ─────────────────────────────────────────────────────────────────
 
 export interface Portfolio {
@@ -35,63 +69,34 @@ export interface Holding {
   id: string;
   portfolio_id: string;
   symbol: string;
+  isin: string | null;
+  exchange: string;
   quantity: number;
-  avg_cost_basis: number;
-  current_price: number;
-  current_value: number;
+  // BUG-05 FIX: Field names aligned with backend HoldingResponse schema.
+  // Week-2 migration renamed: avg_cost_basis→average_cost, current_price→market_price, current_value→market_value
+  average_cost: number;
+  market_price: number;
+  market_value: number;
   unrealized_pnl: number;
   unrealized_pnl_pct: number;
+  realized_pnl: number;
+  updated_at: string;
 }
 
 // ── Analytics ─────────────────────────────────────────────────────────────────
 
-export interface DispositionEffect {
+export interface BehavioralMetricResponse {
+  id: string;
+  portfolio_id: string;
+  period_type: string;
   pgr: number | null;
   plr: number | null;
-  de_score: number | null;
-  classification: string | null;
-  realized_gains_count: number;
-  realized_losses_count: number;
-  paper_gains_count: number;
-  paper_losses_count: number;
-  status: string;
-}
-
-export interface Overtrading {
+  disposition_effect_score: number | null;
   portfolio_turnover_ratio: number | null;
-  trade_frequency_per_month: number | null;
-  total_trades: number;
-  cost_drag_pct: number | null;
-  classification: string | null;
-  status: string;
-}
-
-export interface HoldingBreakdown {
-  symbol: string;
-  weight: number;
-  value: number;
-}
-
-export interface Concentration {
   hhi: number | null;
-  effective_n: number | null;
-  top1_holding_pct: number | null;
-  top3_holding_pct: number | null;
-  num_holdings: number;
-  holdings_breakdown: HoldingBreakdown[];
-  classification: string | null;
-  status: string;
-}
-
-export interface BehavioralSummary {
-  status: string;
-  message?: string;
-  computed_at: string | null;
-  behavioral_risk_score: number | null;
-  disposition_effect: DispositionEffect | null;
-  overtrading: Overtrading | null;
-  concentration: Concentration | null;
-  details: Record<string, unknown> | null;
+  cost_drag_pct: number | null;
+  metric_details: Record<string, any> | null;
+  computed_at: string;
 }
 
 // ── Recommendations ───────────────────────────────────────────────────────────

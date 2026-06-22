@@ -4,42 +4,27 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { authApi } from '@/lib/api';
-import { useAuthStore } from '@/store/authStore';
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const router = useRouter();
-  const setAuth = useAuthStore((state) => state.setAuth);
   
+  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
 
     try {
-      const response = await authApi.login(email, password);
-      const token = response.data.access_token;
-
-      // Store token first so the Axios interceptor attaches it to the /me call
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('access_token', token);
-      }
-
-      // Fetch real user profile from /me endpoint
-      const meResponse = await authApi.me();
-      setAuth(meResponse.data, token);
-
-      router.push('/dashboard');
+      await authApi.register({ email, password, full_name: fullName });
+      // On success, redirect to login so they can authenticate
+      router.push('/login?registered=true');
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Failed to login');
-      // Clean up token if /me failed
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('access_token');
-      }
+      setError(err.response?.data?.detail || 'Failed to register account');
     } finally {
       setIsLoading(false);
     }
@@ -50,8 +35,8 @@ export default function LoginPage() {
       <div className="w-full max-w-md bg-gray-900 border border-gray-800 rounded-2xl p-8 shadow-xl">
         <div className="text-center mb-8">
           <div className="text-4xl mb-4">📈</div>
-          <h1 className="text-3xl font-bold text-white tracking-tight">TradeSense</h1>
-          <p className="text-gray-400 mt-2">Sign in to your portfolio analytics</p>
+          <h1 className="text-3xl font-bold text-white tracking-tight">Create Account</h1>
+          <p className="text-gray-400 mt-2">Join TradeSense to analyze your behaviors</p>
         </div>
 
         {error && (
@@ -60,9 +45,21 @@ export default function LoginPage() {
           </div>
         )}
 
-        <form onSubmit={handleLogin} className="space-y-6">
+        <form onSubmit={handleRegister} className="space-y-5">
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Email</label>
+            <label className="block text-sm font-medium text-gray-300 mb-1">Full Name</label>
+            <input
+              type="text"
+              required
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+              placeholder="John Doe"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-1">Email</label>
             <input
               type="email"
               required
@@ -74,7 +71,7 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Password</label>
+            <label className="block text-sm font-medium text-gray-300 mb-1">Password</label>
             <input
               type="password"
               required
@@ -83,6 +80,7 @@ export default function LoginPage() {
               className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
               placeholder="••••••••"
             />
+            <p className="text-xs text-gray-500 mt-2">Must be at least 8 characters</p>
           </div>
 
           <button
@@ -90,14 +88,14 @@ export default function LoginPage() {
             disabled={isLoading}
             className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg shadow-lg shadow-blue-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isLoading ? 'Signing in...' : 'Sign In'}
+            {isLoading ? 'Creating account...' : 'Sign Up'}
           </button>
         </form>
 
         <div className="mt-8 text-center text-sm text-gray-400">
-          Don't have an account?{' '}
-          <Link href="/register" className="text-blue-400 hover:text-blue-300 font-medium">
-            Register here
+          Already have an account?{' '}
+          <Link href="/login" className="text-blue-400 hover:text-blue-300 font-medium">
+            Sign in
           </Link>
         </div>
       </div>

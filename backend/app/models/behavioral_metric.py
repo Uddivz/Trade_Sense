@@ -41,7 +41,9 @@ class BehavioralMetric(Base):
     cost_drag_pct: Mapped[float | None] = mapped_column(Numeric(7, 5), nullable=True)
 
     # ── Concentration ───────────────────────────────────────────────────
-    hhi: Mapped[float | None] = mapped_column(Numeric(6, 5), nullable=True)
+    # BUG-03 FIX: HHI ranges 0–10,000. Numeric(6,5) max is 9.99999 → overflow.
+    # Numeric(10, 4) supports values up to 999999.9999 — covers full HHI range.
+    hhi: Mapped[float | None] = mapped_column(Numeric(10, 4), nullable=True)
 
     # ── Composite Risk Score ────────────────────────────────────────────
     behavioral_risk_score: Mapped[float | None] = mapped_column(Numeric(6, 4), nullable=True)

@@ -54,6 +54,8 @@ export const authApi = {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     });
   },
+
+  me: () => api.get<import('@/types').User>('/v1/auth/me'),
 };
 
 // ── Portfolio API ─────────────────────────────────────────────────────────────
@@ -61,14 +63,15 @@ export const portfolioApi = {
   list: () => api.get('/v1/portfolios/'),
 
   create: (name: string, brokerName?: string) =>
-    api.post('/v1/portfolios/', null, {
-      params: { name, broker_name: brokerName },
-    }),
+    // BUG-02 FIX: PortfolioCreate expects a JSON body, not query params
+    api.post('/v1/portfolios/', { name, broker_name: brokerName ?? null }),
 
   uploadCsv: (portfolioId: string, file: File) => {
     const form = new FormData();
     form.append('file', file);
-    return api.post(`/v1/uploads/${portfolioId}`, form, {
+    // BUG-01 FIX: Correct route is POST /v1/uploads/csv?portfolio_id=...
+    return api.post('/v1/uploads/csv', form, {
+      params: { portfolio_id: portfolioId },
       headers: { 'Content-Type': 'multipart/form-data' },
       timeout: 120_000, // 2 min for large CSVs + analytics compute
     });
@@ -76,6 +79,12 @@ export const portfolioApi = {
 
   getHoldings: (portfolioId: string) =>
     api.get(`/v1/portfolios/${portfolioId}/holdings`),
+
+  getTransactions: (portfolioId: string, page = 1, pageSize = 50) =>
+    api.get<import('@/types').PaginatedResponse<import('@/types').Transaction>>(
+      `/v1/portfolios/${portfolioId}/transactions`,
+      { params: { page, page_size: pageSize } }
+    ),
 };
 
 // ── Analytics API ─────────────────────────────────────────────────────────────

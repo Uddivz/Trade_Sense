@@ -1,13 +1,18 @@
 """
 TradeSense — Auth Endpoints
-Implements register and login routes.
+Implements register, login, and /me routes.
 """
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.security import hash_password, verify_password, create_access_token
+from app.core.security import (
+    hash_password,
+    verify_password,
+    create_access_token,
+    get_current_user,
+)
 from app.database import get_db
 from app.models.user import User
 from app.schemas.auth import UserCreate, UserResponse, Token
@@ -74,3 +79,15 @@ async def login(
     # Generate access token
     access_token = create_access_token(subject=user.id)
     return Token(access_token=access_token, token_type="bearer")
+
+
+@router.get("/me", response_model=UserResponse)
+async def get_me(
+    current_user: User = Depends(get_current_user),
+) -> User:
+    """
+    Return the profile of the currently authenticated user.
+    Reads the Bearer token from the Authorization header, validates it,
+    and returns the corresponding user record.
+    """
+    return current_user

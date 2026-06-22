@@ -4,7 +4,9 @@ Loads all settings from environment variables with type validation.
 Uses Pydantic BaseSettings for strict, self-documenting configuration.
 """
 from functools import lru_cache
+# pyrefly: ignore [missing-import]
 from pydantic_settings import BaseSettings, SettingsConfigDict
+# pyrefly: ignore [missing-import]
 from pydantic import field_validator
 
 
