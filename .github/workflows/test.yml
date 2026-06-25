@@ -30,6 +30,9 @@ jobs:
       run: |
         $HOME/.cargo/bin/uv pip install --system -r requirements.txt
 
+    - name: Prepare Environment Variables
+      run: cp .env.example .env
+
     - name: Run pytest
       run: |
         $HOME/.cargo/bin/uv run pytest tests/ -v
