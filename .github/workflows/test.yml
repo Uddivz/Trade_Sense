@@ -35,4 +35,4 @@ jobs:
 
     - name: Run pytest
       run: |
-        $HOME/.cargo/bin/uv run pytest tests/ -v
+        python -m pytest tests/ -v
