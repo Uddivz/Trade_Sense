@@ -2,6 +2,7 @@
 TradeSense — FastAPI Application Entry Point
 Configures the application instance, middleware, routers, and lifecycle events.
 """
+import logging
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
@@ -10,10 +11,16 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.config import settings
+from app.core.logging import configure_logging
 from app.database import check_db_connection
 
 # ── Router Imports (will be activated as they are built in subsequent days) ────
 from app.api.v1.endpoints import auth, portfolios, uploads, analytics
+
+# Logging is configured before any other code runs so that startup events
+# (including the DB connection check) are captured.
+configure_logging(environment=settings.environment)
+logger = logging.getLogger(__name__)
 
 
 # ── Lifespan ───────────────────────────────────────────────────────────────────
@@ -27,16 +34,23 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     # Startup
     db_ok = await check_db_connection()
     if not db_ok:
+        logger.critical(
+            "Cannot connect to PostgreSQL. "
+            "Check DATABASE_URL and ensure the database container is running."
+        )
         raise RuntimeError(
             "Cannot connect to PostgreSQL. "
             "Check DATABASE_URL and ensure the database container is running."
         )
-    print(f"✅  TradeSense API started | env={settings.environment}")
+    logger.info(
+        "TradeSense API started",
+        extra={"environment": settings.environment, "version": settings.app_version},
+    )
 
     yield  # Application runs here
 
     # Shutdown
-    print("🛑  TradeSense API shutting down")
+    logger.info("TradeSense API shutting down")
 
 
 # ── Application Factory ─────────────────────────────────────────────────────────

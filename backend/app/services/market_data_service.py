@@ -1,8 +1,11 @@
 import asyncio
+import logging
 from decimal import Decimal
 
 import yfinance as yf
 from cachetools import TTLCache
+
+logger = logging.getLogger(__name__)
 
 class MarketDataService:
     _MOCK_PRICES = {
@@ -27,19 +30,28 @@ class MarketDataService:
     @classmethod
     def _fetch_from_yfinance_sync(cls, clean_sym: str) -> Decimal | None:
         """Synchronously fetch data from yfinance. Append .NS for Indian stocks."""
+        logger.debug("yfinance fetch started", extra={"symbol": clean_sym})
         try:
             ticker_ns = yf.Ticker(f"{clean_sym}.NS")
             hist_ns = ticker_ns.history(period="1d")
             if not hist_ns.empty:
-                return Decimal(str(hist_ns['Close'].iloc[-1]))
+                price = Decimal(str(hist_ns['Close'].iloc[-1]))
+                logger.debug("yfinance price fetched (.NS)", extra={"symbol": clean_sym, "price": float(price)})
+                return price
 
             # Fallback without .NS
             ticker = yf.Ticker(clean_sym)
             hist = ticker.history(period="1d")
             if not hist.empty:
-                return Decimal(str(hist['Close'].iloc[-1]))
-        except Exception:
-            pass
+                price = Decimal(str(hist['Close'].iloc[-1]))
+                logger.debug("yfinance price fetched (no suffix)", extra={"symbol": clean_sym, "price": float(price)})
+                return price
+        except Exception as exc:
+            logger.warning(
+                "yfinance fetch raised an exception",
+                extra={"symbol": clean_sym, "error": str(exc)},
+            )
+        logger.warning("yfinance returned no data — will use fallback", extra={"symbol": clean_sym})
         return None
 
     @classmethod
@@ -58,12 +70,15 @@ class MarketDataService:
             # TTLCache raises KeyError on miss or expired entry — treat both as a miss
             cached_price = cls._price_cache.get(clean_sym)
             if cached_price is not None:
+                logger.debug("Cache hit", extra={"symbol": clean_sym})
                 prices[clean_sym] = cached_price
             else:
+                logger.debug("Cache miss — queuing fetch", extra={"symbol": clean_sym})
                 symbols_to_fetch.append(clean_sym)
 
         # Batch fetch in thread pool to avoid blocking the asyncio event loop
         if symbols_to_fetch:
+            logger.info("Fetching live prices", extra={"symbols": symbols_to_fetch, "count": len(symbols_to_fetch)})
             tasks = [
                 asyncio.to_thread(cls._fetch_from_yfinance_sync, sym)
                 for sym in symbols_to_fetch
@@ -73,7 +88,12 @@ class MarketDataService:
             for clean_sym, res in zip(symbols_to_fetch, results):
                 if isinstance(res, Exception) or res is None:
                     # Use mock as fallback (stale cache already evicted by TTLCache)
-                    prices[clean_sym] = cls._MOCK_PRICES.get(clean_sym, Decimal("500.00"))
+                    fallback = cls._MOCK_PRICES.get(clean_sym, Decimal("500.00"))
+                    logger.warning(
+                        "Using mock/fallback price",
+                        extra={"symbol": clean_sym, "fallback_price": float(fallback)},
+                    )
+                    prices[clean_sym] = fallback
                 else:
                     cls._price_cache[clean_sym] = res  # TTLCache handles expiry automatically
                     prices[clean_sym] = res

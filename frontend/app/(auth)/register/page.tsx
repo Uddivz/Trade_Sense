@@ -24,7 +24,14 @@ export default function RegisterPage() {
       // On success, redirect to login so they can authenticate
       router.push('/login?registered=true');
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Failed to register account');
+      const detail = err.response?.data?.detail;
+      if (Array.isArray(detail)) {
+        setError(detail.map((d: any) => d.msg).join(', '));
+      } else if (typeof detail === 'string') {
+        setError(detail);
+      } else {
+        setError('Failed to register account');
+      }
     } finally {
       setIsLoading(false);
     }

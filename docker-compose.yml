@@ -66,7 +66,7 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-      target: development
+      target: production
     container_name: tradesense_frontend
     environment:
       NEXT_PUBLIC_API_URL: http://localhost:8000
@@ -74,11 +74,6 @@ services:
       - "3000:3000"
     depends_on:
       - backend
-    volumes:
-      # Hot reload in development
-      - ./frontend:/app
-      - /app/node_modules
-      - /app/.next
     restart: unless-stopped
     networks:
       - tradesense_net
@@ -92,6 +87,8 @@ services:
       dockerfile: Dockerfile
       target: production
     container_name: tradesense_migrate
+    env_file:
+      - ./backend/.env
     environment:
       DATABASE_URL: postgresql+asyncpg://tradesense_user:tradesense_pass@db:5432/tradesense
     depends_on:

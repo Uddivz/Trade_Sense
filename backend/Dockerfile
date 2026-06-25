@@ -12,10 +12,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
+# Install uv for fast dependency resolution
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
 # Install Python dependencies into a local prefix
 COPY requirements.txt .
-RUN pip install --upgrade pip \
-    && pip install --prefix=/install --no-cache-dir -r requirements.txt
+RUN uv pip install --system --prefix=/install --no-cache -r requirements.txt
 
 
 # ── Stage 2: Production Runtime ─────────────────────────────────────────────────

@@ -3,11 +3,14 @@ TradeSense — Recommendation Rules Engine
 Evaluates a BehavioralMetric snapshot against fixed thresholds to generate coaching Recommendations.
 Ensures idempotency to avoid duplicating active recommendations.
 """
+import logging
 import uuid
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.models.behavioral_metric import BehavioralMetric
 from app.models.recommendation import Recommendation
+
+logger = logging.getLogger(__name__)
 
 
 class RulesEngine:
@@ -37,6 +40,10 @@ class RulesEngine:
         de_score = metric.disposition_effect_score
         if de_score is not None and de_score > 0.05:
             if "R001" not in active_rule_ids:
+                logger.info(
+                    "Rule R001 fired: High Disposition Effect",
+                    extra={"user_id": str(user_id), "de_score": de_score, "pgr": metric.pgr, "plr": metric.plr},
+                )
                 r001 = Recommendation(
                     user_id=user_id,
                     rule_id="R001",
@@ -54,6 +61,10 @@ class RulesEngine:
         hhi_score = metric.hhi
         if hhi_score is not None and hhi_score > 2500:
             if "R002" not in active_rule_ids:
+                logger.info(
+                    "Rule R002 fired: Dangerous Concentration",
+                    extra={"user_id": str(user_id), "hhi": hhi_score},
+                )
                 r002 = Recommendation(
                     user_id=user_id,
                     rule_id="R002",
@@ -71,6 +82,10 @@ class RulesEngine:
         ptr_score = metric.portfolio_turnover_ratio
         if ptr_score is not None and ptr_score > 0.10:
             if "R003" not in active_rule_ids:
+                logger.info(
+                    "Rule R003 fired: High Portfolio Turnover",
+                    extra={"user_id": str(user_id), "ptr": ptr_score, "cost_drag_pct": metric.cost_drag_pct},
+                )
                 r003 = Recommendation(
                     user_id=user_id,
                     rule_id="R003",
@@ -88,5 +103,9 @@ class RulesEngine:
             # ISSUE-06 FIX: Do NOT commit here. ingestion.py owns the transaction.
             # flush() writes rows without committing so they're visible in the same session.
             await self.db.flush()
+            logger.info(
+                "New recommendations flushed",
+                extra={"user_id": str(user_id), "count": len(new_recommendations), "rule_ids": [r.rule_id for r in new_recommendations]},
+            )
 
         return new_recommendations

@@ -6,6 +6,7 @@ import { portfolioApi, analyticsApi } from '@/lib/api';
 import { usePortfolioStore } from '@/store/portfolioStore';
 import { BehavioralMetricResponse, Holding, Recommendation } from '@/types';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
+import ConcentrationTreemap from '@/components/ConcentrationTreemap';
 
 export default function DashboardPage() {
   const { activePortfolio, setActivePortfolio } = usePortfolioStore();
@@ -138,6 +139,29 @@ export default function DashboardPage() {
               </BarChart>
             </ResponsiveContainer>
           </div>
+        </div>
+
+        {/* Chart: Portfolio Concentration Treemap */}
+        <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+          <div className="flex items-center justify-between mb-1">
+            <h3 className="text-lg font-bold text-white">Portfolio Concentration</h3>
+            <span
+              className={`text-xs font-semibold px-2 py-1 rounded-full ${
+                metrics.hhi && metrics.hhi > 2500
+                  ? 'bg-red-500/15 text-red-400'
+                  : metrics.hhi && metrics.hhi > 1500
+                  ? 'bg-yellow-500/15 text-yellow-400'
+                  : 'bg-green-500/15 text-green-400'
+              }`}
+            >
+              HHI {Math.round(metrics.hhi || 0)}
+              {metrics.hhi && metrics.hhi > 2500 ? ' · High' : metrics.hhi && metrics.hhi > 1500 ? ' · Medium' : ' · Low'}
+            </span>
+          </div>
+          <p className="text-xs text-gray-500 mb-4">
+            Herfindahl–Hirschman Index — measures diversification risk.
+          </p>
+          <ConcentrationTreemap holdings={holdings} />
         </div>
 
         {/* Holdings Table */}

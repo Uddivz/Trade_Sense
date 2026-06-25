@@ -2,6 +2,8 @@
 TradeSense — Auth Endpoints
 Implements register, login, and /me routes.
 """
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import select
@@ -16,6 +18,8 @@ from app.core.security import (
 from app.database import get_db
 from app.models.user import User
 from app.schemas.auth import UserCreate, UserResponse, Token
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -33,6 +37,7 @@ async def register(
     result = await db.execute(select(User).where(User.email == user_in.email))
     existing_user = result.scalars().first()
     if existing_user:
+        logger.warning("Registration rejected — email already in use", extra={"email": user_in.email})
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email already registered",
@@ -48,6 +53,7 @@ async def register(
     db.add(new_user)
     await db.commit()
     await db.refresh(new_user)
+    logger.info("New user registered", extra={"user_id": str(new_user.id), "email": new_user.email})
     return new_user
 
 
@@ -64,6 +70,7 @@ async def login(
     result = await db.execute(select(User).where(User.email == form_data.username))
     user = result.scalars().first()
     if not user or not verify_password(form_data.password, user.password_hash):
+        logger.warning("Login failed — invalid credentials", extra={"email": form_data.username})
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
@@ -71,6 +78,7 @@ async def login(
         )
 
     if not user.is_active:
+        logger.warning("Login rejected — inactive account", extra={"user_id": str(user.id)})
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Inactive user",
@@ -78,6 +86,7 @@ async def login(
 
     # Generate access token
     access_token = create_access_token(subject=user.id)
+    logger.info("User logged in", extra={"user_id": str(user.id), "email": user.email})
     return Token(access_token=access_token, token_type="bearer")
 
 

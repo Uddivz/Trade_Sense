@@ -35,7 +35,14 @@ export default function LoginPage() {
 
       router.push('/dashboard');
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Failed to login');
+      const detail = err.response?.data?.detail;
+      if (Array.isArray(detail)) {
+        setError(detail.map((d: any) => d.msg).join(', '));
+      } else if (typeof detail === 'string') {
+        setError(detail);
+      } else {
+        setError('Failed to login');
+      }
       // Clean up token if /me failed
       if (typeof window !== 'undefined') {
         localStorage.removeItem('access_token');

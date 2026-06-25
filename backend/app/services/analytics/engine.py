@@ -3,6 +3,7 @@ TradeSense — Behavioral Analytics Engine
 Coordinates the extraction of portfolio data, calculates metrics via the pure math module,
 and saves the resultant BehavioralMetric snapshot to the database.
 """
+import logging
 import uuid
 from decimal import Decimal
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,6 +13,8 @@ from app.models.holding import Holding
 from app.models.transaction import Transaction
 from app.models.behavioral_metric import BehavioralMetric
 from app.services.analytics import math as analytics_math
+
+logger = logging.getLogger(__name__)
 
 
 class AnalyticsEngine:
@@ -31,6 +34,10 @@ class AnalyticsEngine:
         transactions = (await self.db.execute(stmt_t)).scalars().all()
 
         if not transactions and not holdings:
+            logger.warning(
+                "No data available for metric computation — skipping",
+                extra={"portfolio_id": str(portfolio_id)},
+            )
             return None
 
         # ── Aggregate Gains & Losses ──────────────────────────────────────────
@@ -104,4 +111,16 @@ class AnalyticsEngine:
         # flush() assigns the DB-generated id without committing.
         await self.db.flush()
 
+        logger.debug(
+            "Behavioral metric snapshot flushed",
+            extra={
+                "portfolio_id": str(portfolio_id),
+                "pgr": float(pgr),
+                "plr": float(plr),
+                "de_score": float(de_score),
+                "hhi": float(hhi_score),
+                "ptr": float(ptr_score),
+                "cost_drag_pct": float(cost_drag_pct),
+            },
+        )
         return metric
