@@ -24,11 +24,11 @@ jobs:
         python-version: "3.12"
         
     - name: Install uv
-      run: curl -LsSf https://astral.sh/uv/install.sh | sh
+      run: pip install uv
 
     - name: Install dependencies
       run: |
-        $HOME/.cargo/bin/uv pip install --system -r requirements.txt
+        uv pip install --system -r requirements.txt
 
     - name: Prepare Environment Variables
       run: cp .env.example .env
