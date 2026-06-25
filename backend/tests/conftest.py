@@ -14,6 +14,13 @@ def compile_jsonb_sqlite(element, compiler, **kw):
 
 
 from sqlalchemy.sql import functions
+from unittest.mock import patch
+
+@pytest.fixture(autouse=True)
+def mock_yfinance():
+    """Disable live yfinance calls during tests to prevent brittle assertions."""
+    with patch("app.services.market_data_service.MarketDataService._fetch_from_yfinance_sync", return_value=None):
+        yield
 
 @compiles(functions.now, "sqlite")
 def compile_now_sqlite(element, compiler, **kw):
