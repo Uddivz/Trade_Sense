@@ -25,20 +25,20 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     # Alter hhi column from Numeric(6, 5) to Numeric(10, 4)
     # This is safe: widening precision never truncates existing data.
-    op.alter_column(
-        'behavioral_metrics',
-        'hhi',
-        type_=sa.Numeric(precision=10, scale=4),
-        existing_nullable=True,
-    )
+    with op.batch_alter_table('behavioral_metrics') as batch_op:
+        batch_op.alter_column(
+            'hhi',
+            type_=sa.Numeric(precision=10, scale=4),
+            existing_nullable=True,
+        )
 
 
 def downgrade() -> None:
     # Revert to original (incorrect) definition — existing rows with hhi > 9
     # will be truncated/errored by the DB on downgrade. Use with caution.
-    op.alter_column(
-        'behavioral_metrics',
-        'hhi',
-        type_=sa.Numeric(precision=6, scale=5),
-        existing_nullable=True,
-    )
+    with op.batch_alter_table('behavioral_metrics') as batch_op:
+        batch_op.alter_column(
+            'hhi',
+            type_=sa.Numeric(precision=6, scale=5),
+            existing_nullable=True,
+        )

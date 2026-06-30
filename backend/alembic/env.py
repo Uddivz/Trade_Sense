@@ -28,8 +28,9 @@ from app.models import *  # noqa: F401, F403 — registers all models in Base.me
 
 target_metadata = Base.metadata
 
-# ── Override URL from environment (Docker / CI) ─────────────────────────────────
-DATABASE_URL = os.environ.get("DATABASE_URL")
+# ── Override URL from environment (Docker / CI / .env) ───────────────────────────
+from app.config import settings
+DATABASE_URL = os.environ.get("DATABASE_URL") or settings.database_url
 if DATABASE_URL:
     config.set_main_option("sqlalchemy.url", DATABASE_URL)
 

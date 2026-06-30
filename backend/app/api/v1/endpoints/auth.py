@@ -66,8 +66,9 @@ async def login(
     OAuth2 compatible token login, retrieve a JWT access token.
     Accepts standard form-encoded username (email) and password.
     """
-    # Retrieve user
-    result = await db.execute(select(User).where(User.email == form_data.username))
+    # Retrieve user — normalise email to match stored casing
+    normalised_email = form_data.username.strip().lower()
+    result = await db.execute(select(User).where(User.email == normalised_email))
     user = result.scalars().first()
     if not user or not verify_password(form_data.password, user.password_hash):
         logger.warning("Login failed — invalid credentials", extra={"email": form_data.username})

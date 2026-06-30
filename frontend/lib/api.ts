@@ -43,12 +43,14 @@ api.interceptors.response.use(
 // ── Auth API ──────────────────────────────────────────────────────────────────
 export const authApi = {
   register: (data: { email: string; password: string; full_name: string }) =>
-    api.post('/v1/auth/register', data),
+    // Normalise email to lowercase before sending
+    api.post('/v1/auth/register', { ...data, email: data.email.trim().toLowerCase() }),
 
   login: (email: string, password: string) => {
     // FastAPI OAuth2PasswordRequestForm requires form-encoded body
+    // Normalise email to lowercase to match stored casing
     const form = new URLSearchParams();
-    form.append('username', email);
+    form.append('username', email.trim().toLowerCase());
     form.append('password', password);
     return api.post('/v1/auth/login', form, {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },

@@ -13,21 +13,51 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 from sqlalchemy.orm import DeclarativeBase
-from sqlalchemy import text
+from sqlalchemy import text, event
+from sqlalchemy.ext.compiler import compiles
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.sql import functions
+from datetime import datetime
 
 from app.config import settings
+
+
+# ── SQLite Compilation Overrides ────────────────────────────────────────────────
+@compiles(JSONB, "sqlite")
+def compile_jsonb_sqlite(element, compiler, **kw):
+    return "JSON"
+
+
+@compiles(functions.now, "sqlite")
+def compile_now_sqlite(element, compiler, **kw):
+    return "strftime('%Y-%m-%d %H:%M:%f', 'now')"
+
+
+def sqlite_now():
+    return datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S.%f')
 
 
 # ── Engine ─────────────────────────────────────────────────────────────────────
 # pool_size=10, max_overflow=20 are appropriate for MVP load.
 # Increase at Phase 2 when horizontal scaling is introduced.
-engine: AsyncEngine = create_async_engine(
-    settings.database_url,
-    echo=settings.debug,           # SQL logging in development only
-    pool_pre_ping=True,            # Validates connections before use (handles DB restarts)
-    pool_size=10,
-    max_overflow=20,
-)
+# SQLite does not support connection pooling parameters like pool_size/max_overflow,
+# so we conditionalize the engine creation.
+if settings.database_url.startswith("sqlite"):
+    engine: AsyncEngine = create_async_engine(
+        settings.database_url,
+        echo=settings.debug,
+    )
+    @event.listens_for(engine.sync_engine, "connect")
+    def receive_connect(dbapi_connection, connection_record):
+        dbapi_connection.create_function("now", 0, sqlite_now)
+else:
+    engine: AsyncEngine = create_async_engine(
+        settings.database_url,
+        echo=settings.debug,           # SQL logging in development only
+        pool_pre_ping=True,            # Validates connections before use (handles DB restarts)
+        pool_size=10,
+        max_overflow=20,
+    )
 
 # ── Session Factory ─────────────────────────────────────────────────────────────
 AsyncSessionLocal: async_sessionmaker[AsyncSession] = async_sessionmaker(

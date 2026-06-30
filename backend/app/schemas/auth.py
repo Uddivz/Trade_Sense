@@ -14,6 +14,14 @@ class UserCreate(BaseModel):
     password: str
     full_name: str
 
+    @field_validator("email", mode="before")
+    @classmethod
+    def normalize_email(cls, v: str) -> str:
+        """Strip whitespace and lowercase the email for consistent storage."""
+        if isinstance(v, str):
+            return v.strip().lower()
+        return v
+
     @field_validator("password")
     @classmethod
     def password_strength(cls, v: str) -> str:
