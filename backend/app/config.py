@@ -35,6 +35,8 @@ class Settings(BaseSettings):
 
     # ── Market Data ────────────────────────────────────────────────────
     market_data_cache_ttl_seconds: int = 3600  # 1 hour
+    redis_url: str = "redis://localhost:6379"
+
 
     @field_validator("allowed_origins", mode="before")
     @classmethod

@@ -1,0 +1,8 @@
+{
+    "features": [
+        "trade_value_pct",
+        "time_since_last_trade_mins",
+        "daily_trade_count"
+    ],
+    "version": "isolation-forest-100"
+}

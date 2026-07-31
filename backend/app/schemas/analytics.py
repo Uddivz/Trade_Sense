@@ -77,3 +77,83 @@ class RecommendationResponse(BaseModel):
             }
         }
     )
+
+
+class SHAPFeatureContribution(BaseModel):
+    feature: str
+    value: float
+    shap_value: float
+    direction: str  # "increases_risk" | "reduces_risk"
+
+
+class MLRiskScoreResponse(BaseModel):
+    portfolio_id: uuid.UUID
+    risk_label: str
+    confidence: float
+    shap_explanation: list[SHAPFeatureContribution]
+    model_version: str
+    computed_at: datetime
+
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
+            "example": {
+                "portfolio_id": "123e4567-e89b-12d3-a456-426614174000",
+                "risk_label": "HIGH",
+                "confidence": 0.892,
+                "shap_explanation": [
+                    {
+                        "feature": "disposition_effect_score",
+                        "value": 0.45,
+                        "shap_value": 0.35,
+                        "direction": "increases_risk"
+                    },
+                    {
+                        "feature": "hhi",
+                        "value": 3050.5,
+                        "shap_value": 0.28,
+                        "direction": "increases_risk"
+                    }
+                ],
+                "model_version": "xgboost-100",
+                "computed_at": "2023-10-15T12:00:00Z"
+            }
+        }
+    )
+
+
+class TradeAnomalyResponse(BaseModel):
+    transaction_id: uuid.UUID
+    symbol: str
+    trade_date: str
+    type: str
+    anomaly_score: float
+    flags: list[str]
+
+
+class PortfolioAnomaliesResponse(BaseModel):
+    portfolio_id: uuid.UUID
+    anomalies: list[TradeAnomalyResponse]
+    model_version: str
+    computed_at: datetime
+
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
+            "example": {
+                "portfolio_id": "123e4567-e89b-12d3-a456-426614174000",
+                "anomalies": [
+                    {
+                        "transaction_id": "987e6543-e21b-12d3-a456-426614174111",
+                        "symbol": "RELIANCE",
+                        "trade_date": "2023-10-10",
+                        "type": "SELL",
+                        "anomaly_score": 0.88,
+                        "flags": ["High Volume Rapid Trade", "Unusually Large Position Size"]
+                    }
+                ],
+                "model_version": "isolation-forest-100",
+                "computed_at": "2023-10-15T12:00:00Z"
+            }
+        }
+    )

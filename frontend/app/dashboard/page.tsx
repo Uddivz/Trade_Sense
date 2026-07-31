@@ -4,15 +4,17 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { portfolioApi, analyticsApi } from '@/lib/api';
 import { usePortfolioStore } from '@/store/portfolioStore';
-import { BehavioralMetricResponse, Holding, Recommendation } from '@/types';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
+import { BehavioralMetricResponse, Holding, Recommendation, MLRiskScoreResponse } from '@/types';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import ConcentrationTreemap from '@/components/ConcentrationTreemap';
+import MLRiskProfilerCard from '@/components/MLRiskProfilerCard';
 
 export default function DashboardPage() {
   const { activePortfolio, setActivePortfolio } = usePortfolioStore();
   const [metrics, setMetrics] = useState<BehavioralMetricResponse | null>(null);
   const [holdings, setHoldings] = useState<Holding[]>([]);
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
+  const [mlRisk, setMlRisk] = useState<MLRiskScoreResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -33,15 +35,17 @@ export default function DashboardPage() {
         }
 
         // Fetch data in parallel
-        const [holdingsRes, analyticsRes, recRes] = await Promise.all([
+        const [holdingsRes, analyticsRes, recRes, mlRiskRes] = await Promise.all([
           portfolioApi.getHoldings(currentPortfolioId as string),
           analyticsApi.getSummary(currentPortfolioId as string).catch(() => ({ data: null })), // Catch 404
-          analyticsApi.getRecommendations()
+          analyticsApi.getRecommendations(),
+          analyticsApi.getMlRiskScore(currentPortfolioId as string).catch(() => ({ data: null }))
         ]);
 
         setHoldings(holdingsRes.data);
         if (analyticsRes.data) setMetrics(analyticsRes.data);
         setRecommendations(recRes.data);
+        if (mlRiskRes && mlRiskRes.data) setMlRisk(mlRiskRes.data);
 
       } catch (err) {
         console.error('Dashboard fetch error:', err);
@@ -122,6 +126,9 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
+
+        {/* ML Risk Profiler Card */}
+        <MLRiskProfilerCard mlRisk={mlRisk} />
 
         {/* Chart: PGR vs PLR */}
         <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">

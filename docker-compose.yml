@@ -38,11 +38,14 @@ services:
       ALLOWED_ORIGINS: "http://localhost:3000,http://frontend:3000"
       # Explicitly point to the postgres container — overrides any SQLite URL from .env
       DATABASE_URL: "postgresql+asyncpg://tradesense_user:tradesense_pass@db:5432/tradesense"
+      REDIS_URL: "redis://redis:6379"
     ports:
       - "8000:8000"
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_started
     volumes:
       # Hot reload in development — remove in production
       - ./backend/app:/app/app
@@ -99,6 +102,16 @@ services:
     command: alembic upgrade head
     profiles:
       - migrate        # Only runs with: docker compose --profile migrate up migrate
+    networks:
+      - tradesense_net
+
+  # ── Redis Cache ────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: tradesense_redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
     networks:
       - tradesense_net
 

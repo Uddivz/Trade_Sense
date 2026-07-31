@@ -101,6 +101,11 @@ export const analyticsApi = {
 
   dismissRecommendation: (id: string) =>
     api.patch(`/v1/analytics/recommendations/${id}/dismiss`),
+
+  getMlRiskScore: (portfolioId: string) =>
+    api.get<import('@/types').MLRiskScoreResponse>('/v1/analytics/ml-risk-score', {
+      params: { portfolio_id: portfolioId }
+    }),
 };
 
 // ── System API ────────────────────────────────────────────────────────────────

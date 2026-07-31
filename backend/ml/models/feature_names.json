@@ -1,0 +1,21 @@
+{
+    "features": [
+        "pgr",
+        "plr",
+        "disposition_effect_score",
+        "hhi",
+        "portfolio_turnover_ratio",
+        "cost_drag_pct"
+    ],
+    "label_map": {
+        "LOW": 0,
+        "MEDIUM": 1,
+        "HIGH": 2
+    },
+    "inv_label_map": {
+        "0": "LOW",
+        "1": "MEDIUM",
+        "2": "HIGH"
+    },
+    "has_shap": false
+}

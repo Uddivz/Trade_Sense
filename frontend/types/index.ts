@@ -129,3 +129,22 @@ export interface UploadResponse {
 export interface ApiError {
   detail: string;
 }
+
+// ── ML Risk Profiler ──────────────────────────────────────────────────────────
+
+export interface SHAPFeatureContribution {
+  feature: string;
+  value: number;
+  shap_value: number;
+  direction: 'increases_risk' | 'reduces_risk';
+}
+
+export interface MLRiskScoreResponse {
+  portfolio_id: string;
+  risk_label: 'LOW' | 'MEDIUM' | 'HIGH';
+  confidence: number;
+  shap_explanation: SHAPFeatureContribution[];
+  model_version: string;
+  computed_at: string;
+}
+
